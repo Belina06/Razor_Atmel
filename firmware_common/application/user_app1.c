@@ -41,7 +41,12 @@ Global variable definitions with scope across entire project.
 All Global variable names shall start with "G_UserApp1"
 ***********************************************************************************************************************/
 /* New variables */
-volatile u32 G_u32UserApp1Flags;                       /* Global state flags */
+volatile u32 G_u32UserApp1Flags;  /* Global state flags*/
+
+
+
+
+
 
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -87,7 +92,14 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
- 
+ LedOff(WHITE);
+ LedOff(RED);
+ LedOff(PURPLE);
+ LedOff(ORANGE);
+ LedOff(BLUE);
+ LedOff(GREEN);
+ LedOff(CYAN);
+
   /* If good initialization, set state to Idle */
   if( 1 )
   {
@@ -136,9 +148,36 @@ State Machine Function Definitions
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
 {
+  static u8 u8KeyValue=0;
+ 
+  /*给按钮赋值*/
+  if(WasButtonPressed(BUTTON1))  
+{
+    ButtonAcknowledge(BUTTON1);
+    u8KeyValue=5;
+}
 
-} /* end UserApp1SM_Idle() */
-    
+  if(WasButtonPressed(BUTTON2))
+{
+    ButtonAcknowledge(BUTTON2);
+    u8KeyValue=6;
+}
+
+/*选择判断*/
+  switch(u8KeyValue)
+{
+    case 5:
+      LedToggle(PURPLE);     /*改变上一次灯的状态，实现开关功能*/
+      u8KeyValue=0;          /*使其值为0*/
+      break;
+    case 6:
+      LedToggle(BLUE);       /*改变上一次灯的状态，实现开关功能*/
+      u8KeyValue=0;          /*使其值为0*/
+      break;
+    default:
+      break;
+}
+}/* end Us*/
 
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Handle an error */
