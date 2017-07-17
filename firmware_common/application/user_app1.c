@@ -92,13 +92,11 @@ Promises:
 */
 void UserApp1Initialize(void)
 {
- LedOff(WHITE);
- LedOff(RED);
- LedOff(PURPLE);
- LedOff(ORANGE);
- LedOff(BLUE);
- LedOff(GREEN);
- LedOff(CYAN);
+ u8 au8Message[]="Hello world!";
+ LCDMessage(LINE1_START_ADDR,au8Message);
+ LCDClearChars(LINE1_START_ADDR+13,3);
+ LCDCommand(LCD_CLEAR_CMD);
+
 
   /* If good initialization, set state to Idle */
   if( 1 )
@@ -148,35 +146,110 @@ State Machine Function Definitions
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
 {
-  static u8 u8KeyValue=0;
- 
-  /*给按钮赋值*/
-  if(WasButtonPressed(BUTTON1))  
-{
-    ButtonAcknowledge(BUTTON1);
-    u8KeyValue=5;
-}
-
-  if(WasButtonPressed(BUTTON2))
-{
-    ButtonAcknowledge(BUTTON2);
-    u8KeyValue=6;
-}
-
-/*选择判断*/
-  switch(u8KeyValue)
-{
-    case 5:
-      LedToggle(PURPLE);     /*改变上一次灯的状态，实现开关功能*/
-      u8KeyValue=0;          /*使其值为0*/
-      break;
-    case 6:
-      LedToggle(BLUE);       /*改变上一次灯的状态，实现开关功能*/
-      u8KeyValue=0;          /*使其值为0*/
-      break;
-    default:
-      break;
-}
+   /* static u8 au8Value[]={1,2,3};
+    static u8 u8CharCount=0;
+    u8CharCount=DebugScanf(au8Value);
+	
+	static u8 u8Index=0;
+	static u8 u8Comfirm=0;
+	static u16 u16Counter=0;
+	static bool bPressed=FALSE;
+	static bool bIsOk=TRUE;
+	u8 u8TempIndex;
+        
+    
+    
+    if(WasButtonPressed(BUTTON3))
+	{
+		ButtonAcknowledge(BUTTON3);		
+		u8Comfirm++;
+	}
+	
+	if(u8Comfirm==2)
+	{
+		for(u8TempIndex=0;u8TempIndex<6;u8TempIndex++)
+		{
+			if(u8RealPassword[u8TempIndex]!=
+			   u8UserPassword[u8TempIndex])
+			{
+				bIsOk=FALSE;
+				break;
+			}
+		}
+		
+		if(bIsOk)
+		{
+			PWMAudioOff(BUZZER1);
+                       
+                        LedOn(WHITE);
+			LedOff(PURPLE);
+		}
+		else
+		{
+			
+                        
+                        LedOff(WHITE);
+			LedOn(PURPLE);
+                        bIsOk=!bIsOk;
+		}
+		
+               
+                
+                LedOff(BLUE);
+                PWMAudioOff(BUZZER1);
+                u8Comfirm=0;
+		u8Index=0;
+	}
+	
+	if(u8Comfirm==1)
+	{
+		LedOn(BLUE);
+		
+		if(u8Index<7)
+		{
+			if(WasButtonPressed(BUTTON0))
+			{
+				ButtonAcknowledge(BUTTON0);
+				LedOn(RED);
+                                PWMAudioOn(BUZZER1);
+				bPressed=TRUE;
+				u8UserPassword[u8Index]=1;
+				u8Index++;
+			}
+		
+			if(WasButtonPressed(BUTTON1))
+			{
+				ButtonAcknowledge(BUTTON1);
+				LedOn(RED);
+                                PWMAudioOn(BUZZER1);
+				bPressed=TRUE;
+				u8UserPassword[u8Index]=2;
+				u8Index++;
+			}
+		
+			if(WasButtonPressed(BUTTON2))
+			{
+				ButtonAcknowledge(BUTTON2);
+				LedOn(RED);
+                                PWMAudioOn(BUZZER1);
+				bPressed=TRUE;
+				u8UserPassword[u8Index]=3;
+				u8Index++;
+			}
+			
+			if(bPressed==TRUE)
+			{
+				u16Counter++;
+                                
+				if(u16Counter==100)
+				{
+					u16Counter=0;
+                                        LedOff(RED);
+					bPressed=FALSE;
+				}
+			}			
+		}
+	}*/
 }/* end Us*/
 
 /*-------------------------------------------------------------------------------------------------------------------*/
