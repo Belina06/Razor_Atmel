@@ -42,6 +42,8 @@ All Global variable names shall start with "G_"
 ***********************************************************************************************************************/
 /* New variables */
 volatile u32 G_u32UserAppFlags;                       /* Global state flags */
+static u8 UserApp_au8MyName[]="Hello Belina         !";
+static u8 UserApp_CursorPosition;
 
 
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -57,7 +59,7 @@ extern volatile u32 G_u32SystemTime1s;                 /* From board-specific so
 Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp_" and be declared as static.
 ***********************************************************************************************************************/
-static u8 UserApp_au8MyName[] = "LCD Example";     
+    
 static u8 UserApp_CursorPosition;
 
 static fnCode_type UserApp_StateMachine;            /* The state machine function pointer */
@@ -91,23 +93,25 @@ Promises:
 */
 void UserAppInitialize(void)
 {
-  u8 au8Message[] = "Hello world!";
+ 
+PWMAudioSetFrequency(BUZZER1,1000);
+  
 
   /* Examples */
-  LCDMessage(LINE1_START_ADDR, au8Message);
+  
   LCDClearChars(LINE1_START_ADDR + 13, 3);
   LCDCommand(LCD_CLEAR_CMD);
   
   /* Write name and button labels */
-  LCDMessage(LINE1_START_ADDR, UserApp_au8MyName);
+  /*LCDMessage(LINE1_START_ADDR, UserApp_au8MyName);
   LCDMessage(LINE2_START_ADDR, "0");
   LCDMessage(LINE2_START_ADDR + 6, "1");
   LCDMessage(LINE2_START_ADDR + 13, "2");
-  LCDMessage(LINE2_END_ADDR, "3");
+  LCDMessage(LINE2_END_ADDR, "3");*/
   
   /* Home the cursor */
-  LCDCommand(LCD_HOME_CMD);  
-  UserApp_CursorPosition = LINE1_START_ADDR;
+ /* LCDCommand(LCD_HOME_CMD);  
+  UserApp_CursorPosition = LINE1_START_ADDR;*/
   
   /* If good initialization, set state to Idle */
   if( 1 )
@@ -157,79 +161,41 @@ State Machine Function Definitions
 /* Wait for a message to be queued */
 static void UserAppSM_Idle(void)
 {
-  static bool bCursorOn = FALSE;
+  static u32 u32CounterTime=0;
+ 
+  u32CounterTime++;
   
-  if(WasButtonPressed(BUTTON0))
+  if(WasButtonPressed(BUTTON1))
   {
-    ButtonAcknowledge(BUTTON0);
-    
-    if(bCursorOn)
-    {
-      /* Cursor is on, so turn it off */
-      LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON);
-      bCursorOn = FALSE;
-    }
-    else
-    {
-      /* Cursor is off, so turn it on */
-      LCDCommand(LCD_DISPLAY_CMD | LCD_DISPLAY_ON | LCD_DISPLAY_CURSOR | LCD_DISPLAY_BLINK);
-      bCursorOn = TRUE;
-   }
+    ButtonAcknowledge(BUTTON1);
+    LCDMessage(LINE1_START_ADDR,UserApp_au8MyName);
   }
-
-  /* BUTTON2 moves the cursor back one position */
+  
+      if(u32CounterTime==500)
+		{
+		   UserApp_CursorPosition--;
+		   u32CounterTime=0;
+		   LCDMessage(UserApp_CursorPosition,UserApp_au8MyName);
+		   if(UserApp_CursorPosition==LINE1_START_ADDR)
+		   {	
+		     UserApp_CursorPosition=LINE1_END_ADDR;
+		   }
+        }
   if(WasButtonPressed(BUTTON2))
   {
     ButtonAcknowledge(BUTTON2);
-    
-    /* Handle the two special cases or just the regular case */
-    if(UserApp_CursorPosition == LINE1_START_ADDR)
-    {
-      UserApp_CursorPosition = LINE2_END_ADDR;
-    }
-
-    else if (UserApp_CursorPosition == LINE2_START_ADDR)
-    {
-      UserApp_CursorPosition = LINE1_END_ADDR;
-    }
-    
-    /* Otherwise just decrement one space */
-    else
-    {
-      UserApp_CursorPosition--;
-    }
-    
-    /* New position is set, so update */
-    LCDCommand(LCD_ADDRESS_CMD | UserApp_CursorPosition);
-  } /* end BUTTON2 */
+    PWMAudioOn(BUZZER1);
+  }
   
 
-  /* BUTTON3 moves the cursor forward one position */
-  if(WasButtonPressed(BUTTON3))
-  {
-    ButtonAcknowledge(BUTTON3);
-    
-    /* Handle the two special cases or just the regular case */
-    if(UserApp_CursorPosition == LINE1_END_ADDR)
-    {
-      UserApp_CursorPosition = LINE2_START_ADDR;
-    }
 
-    else if (UserApp_CursorPosition == LINE2_END_ADDR)
-    {
-      UserApp_CursorPosition = LINE1_START_ADDR;
-    }
-    
-    /* Otherwise just increment one space */
-    else
-    {
-      UserApp_CursorPosition++;
-    }
-    
-    /* New position is set, so update */
-    LCDCommand(LCD_ADDRESS_CMD | UserApp_CursorPosition);
-  } /* end BUTTON3 */
   
+  
+  
+  
+   
+  
+
 } /* end UserAppSM_Idle() */
      
 
