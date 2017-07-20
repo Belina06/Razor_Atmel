@@ -42,6 +42,26 @@ All Global variable names shall start with "G_UserApp1"
 ***********************************************************************************************************************/
 /* New variables */
 volatile u32 G_u32UserApp1Flags;  /* Global state flags*/
+LedCommandType aeDemoList[]=
+    {
+            {RED,1000,TRUE,LED_PWM_100},
+            {RED,6000,FALSE,LED_PWM_0},
+            {GREEN,3000,TRUE,LED_PWM_100},
+            {GREEN,9000,FALSE,LED_PWM_0},
+            {BLUE,2000,TRUE,LED_PWM_100},
+            {BLUE,4000,FALSE,LED_PWM_0},
+            {YELLOW,4000,TRUE,LED_PWM_100},
+            {YELLOW,8000,FALSE,LED_PWM_0},
+            {CYAN,6000,TRUE,LED_PWM_100},
+            {CYAN,8000,FALSE,LED_PWM_0},
+            {ORANGE,5000,TRUE,LED_PWM_100},
+            {ORANGE,7000,FALSE,LED_PWM_0},
+            {WHITE,7000,TRUE,LED_PWM_100},
+            {WHITE,9000,FALSE,LED_PWM_0},
+            {PURPLE,5000,TRUE,LED_PWM_100},
+            {PURPLE,8000,FALSE,LED_PWM_0}
+    };
+
 
 
 
@@ -63,7 +83,7 @@ Global variable definitions with scope limited to this local application.
 Variable names shall start with "UserApp1_" and be declared as static.
 ***********************************************************************************************************************/
 static fnCode_type UserApp1_StateMachine;            /* The state machine function pointer */
-//static u32 UserApp1_u32Timeout;                      /* Timeout counter used across states */
+static u32 UserApp1_u32Timeout;                      /* Timeout counter used across states */
 
 
 /**********************************************************************************************************************
@@ -99,6 +119,22 @@ void UserApp1Initialize(void)
  LedOff(BLUE);
  LedOff(GREEN);
  LedOff(CYAN);
+ LedOff(YELLOW);
+ LCDCommand(LCD_CLEAR_CMD);   //Clear all the things on LCD.
+ 
+ static u8 au8Message[]={'0'};  //The characters are empty in the middle.
+ 
+ for(u8 i=0;i<16;i+=2)
+ {
+   LCDMessage(LINE1_START_ADDR+i,au8Message);
+ }
+ 
+   
+ 
+ 
+    
+ 
+ 
 
   /* If good initialization, set state to Idle */
   if( 1 )
@@ -147,36 +183,58 @@ State Machine Function Definitions
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
-{
-  static u8 u8KeyValue=0;
- 
-  /*给按钮赋值*/
-  if(WasButtonPressed(BUTTON1))  
-{
-    ButtonAcknowledge(BUTTON1);
-    u8KeyValue=5;
-}
+{   
+   static u32 u32Time=0;
+   static u16 u16Count=0;
+   static u8 u8Counter[]={'0','0','0','0'};
+   static u8 au8LedAddr[]={0,2,4,6,8,10,12,14};
 
-  if(WasButtonPressed(BUTTON2))
-{
-    ButtonAcknowledge(BUTTON2);
-    u8KeyValue=6;
-}
+    
+   u32Time++;
+   u16Count++;
+  
+   if(u32Time==10000)       //When u32Time=10000, u32Time=0.
+    {
+        u32Time=0;
+    }
+   
+   u8Counter[0]=0x30+u32Time/1000;
+   u8Counter[1]=0x30+u32Time%1000/100; 
+   u8Counter[2]=0x30+u32Time%100/10; 
+   u8Counter[3]=0x30+u32Time%10; 
+   
+   if(u32Time%100 == 0)    //Display once every 100ms.
+	{
+        LCDMessage(LINE2_START_ADDR,u8Counter);
+	}
 
-/*选择判断*/
-  switch(u8KeyValue)
-{
-    case 5:
-      LedToggle(PURPLE);     /*改变上一次灯的状态，实现开关功能*/
-      u8KeyValue=0;          /*使其值为0*/
-      break;
-    case 6:
-      LedToggle(BLUE);       /*改变上一次灯的状态，实现开关功能*/
-      u8KeyValue=0;          /*使其值为0*/
-      break;
-    default:
-      break;
-}
+
+   
+   for(u8 j=0;j<16;j++)  //The LEDS are in prople order.
+    {
+        if(u32Time==aeDemoList[j].u32Time)
+        {
+            LedPWM(aeDemoList[j].eLed, aeDemoList[j].eCurrentRate);
+            
+            if(aeDemoList[j].bOn==TRUE)
+            {
+              LCDMessage(LINE1_START_ADDR+au8LedAddr[aeDemoList[j].eLed],"1");
+            }
+            
+            if(aeDemoList[j].bOn==FALSE)
+	  {
+              LCDMessage(LINE1_START_ADDR+au8LedAddr[aeDemoList[j].eLed],"0");
+	  }
+
+        }
+        
+    }
+   
+   
+    
+
+   
+
 }/* end Us*/
 
 /*-------------------------------------------------------------------------------------------------------------------*/
