@@ -61,6 +61,17 @@ LedCommandType aeDemoList[]=
             {PURPLE,5000,TRUE,LED_PWM_100},
             {PURPLE,8000,FALSE,LED_PWM_0}
     };
+LedCommandType aeUserList[]=
+    {
+            {RED,1000,TRUE,LED_PWM_100},
+            {RED,6000,FALSE,LED_PWM_0},
+            {ORANGE,5000,TRUE,LED_PWM_100},
+            {ORANGE,7000,FALSE,LED_PWM_0},
+            {WHITE,7000,TRUE,LED_PWM_100},
+            {WHITE,9000,FALSE,LED_PWM_0},
+            {PURPLE,5000,TRUE,LED_PWM_100},
+            {PURPLE,8000,FALSE,LED_PWM_0}
+    };
 
 
 
@@ -188,8 +199,25 @@ static void UserApp1SM_Idle(void)
    static u16 u16Count=0;
    static u8 u8Counter[]={'0','0','0','0'};
    static u8 au8LedAddr[]={0,2,4,6,8,10,12,14};
+   static u8 au8Input[]={1,2};
+   static u8 u8CharNum;
+   static u8 u8Index=0;
+   
+   //u8CharNum=DebugScanf(au8Input);
+   
+   if(WasButtonPressed(BUTTON0))
+   {
+     ButtonAcknowledge(BUTTON0);
+     u8CharNum=1;
+   }
+   
+   if(WasButtonPressed(BUTTON1))
+   {
+     ButtonAcknowledge(BUTTON1);
+     u8CharNum=2;
+   }
+   
 
-    
    u32Time++;
    u16Count++;
   
@@ -212,7 +240,7 @@ static void UserApp1SM_Idle(void)
    
    for(u8 j=0;j<16;j++)  //The LEDS are in prople order.
     {
-        if(u32Time==aeDemoList[j].u32Time)
+        if(u32Time==aeDemoList[j].u32Time&&u8CharNum==1)
         {
             LedPWM(aeDemoList[j].eLed, aeDemoList[j].eCurrentRate);
             
@@ -230,6 +258,31 @@ static void UserApp1SM_Idle(void)
         
     }
    
+   for(u8 k=0;k<200;k++)
+   {
+      if(u8Index<16)
+   {
+     u8Index++;
+   }
+   
+     if(u32Time==aeUserList[u8Index].u32Time&&u8CharNum==2)
+     {
+       LedPWM(aeUserList[u8Index].eLed,aeUserList[u8Index].eCurrentRate);
+       
+       if(aeUserList[u8Index].bOn==TRUE)
+       {
+         LCDMessage(LINE1_START_ADDR+au8LedAddr[aeUserList[u8Index].eLed],"1");
+       }
+       
+       if(aeUserList[u8Index].bOn==FALSE)
+       {
+         LCDMessage(LINE1_START_ADDR+au8LedAddr[aeUserList[u8Index].eLed],"0");
+       }
+     }
+     u8Index=0; 
+   }
+   
+ 
    
     
 
