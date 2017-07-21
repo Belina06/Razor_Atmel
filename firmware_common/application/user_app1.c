@@ -87,6 +87,8 @@ extern volatile u32 G_u32ApplicationFlags;             /* From main.c */
 
 extern volatile u32 G_u32SystemTime1ms;                /* From board-specific source file */
 extern volatile u32 G_u32SystemTime1s;                 /* From board-specific source file */
+extern u8 G_au8DebugScanfBuffer[];                     /* From debug.c */
+extern u8 G_u8DebugScanfCharCount;                     /* From debug.c */
 
 
 /***********************************************************************************************************************
@@ -133,12 +135,10 @@ void UserApp1Initialize(void)
  LedOff(YELLOW);
  LCDCommand(LCD_CLEAR_CMD);   //Clear all the things on LCD.
  
- static u8 au8Message[]={'0'};  //The characters are empty in the middle.
+ static u8 au8Message[]="0 0 0 0 0 0 0 0";  //The characters are empty in the middle.
  
- for(u8 i=0;i<16;i+=2)
- {
-   LCDMessage(LINE1_START_ADDR+i,au8Message);
- }
+ LCDMessage(LINE1_START_ADDR,au8Message);
+ 
  
    
  
@@ -196,30 +196,53 @@ State Machine Function Definitions
 static void UserApp1SM_Idle(void)
 {   
    static u32 u32Time=0;
-   static u16 u16Count=0;
-   static u8 u8Counter[]={'0','0','0','0'};
+   static u8 u8Counter[]={'0','0','0','0',0};
    static u8 au8LedAddr[]={0,2,4,6,8,10,12,14};
-   static u8 au8Input[]={1,2};
    static u8 u8CharNum;
    static u8 u8Index=0;
+   static u8 u8Option=0;
    
-   //u8CharNum=DebugScanf(au8Input);
-   
-   if(WasButtonPressed(BUTTON0))
+  if(G_au8DebugScanfBuffer[0]=='2')
+	{
+		DebugPrintf("\n\rRun Demolist\n\r");
+		u8Option=1;
+	}
+
+   if(u8Option==1)
+   {
+    if(WasButtonPressed(BUTTON0))
    {
      ButtonAcknowledge(BUTTON0);
      u8CharNum=1;
+     LedOff(WHITE);
+     LedOff(RED);
+     LedOff(PURPLE);
+     LedOff(ORANGE);
+     LedOff(BLUE);
+     LedOff(GREEN);
+     LedOff(CYAN);
+     LedOff(YELLOW);
+   
    }
    
    if(WasButtonPressed(BUTTON1))
    {
      ButtonAcknowledge(BUTTON1);
      u8CharNum=2;
+     LedOff(WHITE);
+     LedOff(RED);
+     LedOff(PURPLE);
+     LedOff(ORANGE);
+     LedOff(BLUE);
+     LedOff(GREEN);
+     LedOff(CYAN);
+     LedOff(YELLOW);
+
+   }
    }
    
-
    u32Time++;
-   u16Count++;
+ 
   
    if(u32Time==10000)       //When u32Time=10000, u32Time=0.
     {
@@ -230,19 +253,20 @@ static void UserApp1SM_Idle(void)
    u8Counter[1]=0x30+u32Time%1000/100; 
    u8Counter[2]=0x30+u32Time%100/10; 
    u8Counter[3]=0x30+u32Time%10; 
+   u8Counter[4]=0;
    
-   if(u32Time%100 == 0)    //Display once every 100ms.
+   if(u32Time%1000 == 0)    //Display once every 100ms.
 	{
         LCDMessage(LINE2_START_ADDR,u8Counter);
 	}
 
 
-   
+   if(u8CharNum==1){
    for(u8 j=0;j<16;j++)  //The LEDS are in prople order.
     {
-        if(u32Time==aeDemoList[j].u32Time&&u8CharNum==1)
+        if(u32Time==aeDemoList[j].u32Time)
         {
-            LedPWM(aeDemoList[j].eLed, aeDemoList[j].eCurrentRate);
+           LedPWM(aeDemoList[j].eLed, aeDemoList[j].eCurrentRate);
             
             if(aeDemoList[j].bOn==TRUE)
             {
@@ -250,22 +274,19 @@ static void UserApp1SM_Idle(void)
             }
             
             if(aeDemoList[j].bOn==FALSE)
-	  {
+	        {
               LCDMessage(LINE1_START_ADDR+au8LedAddr[aeDemoList[j].eLed],"0");
-	  }
+	        }
 
         }
         
     }
-   
-   for(u8 k=0;k<200;k++)
-   {
-      if(u8Index<16)
-   {
-     u8Index++;
+    
    }
-   
-     if(u32Time==aeUserList[u8Index].u32Time&&u8CharNum==2)
+
+ #if 1  
+   for(u8 u8Index=0;u8Index<16;u8Index++) {
+   if((u32Time==aeUserList[u8Index].u32Time)&&(u8CharNum==2))
      {
        LedPWM(aeUserList[u8Index].eLed,aeUserList[u8Index].eCurrentRate);
        
@@ -279,10 +300,10 @@ static void UserApp1SM_Idle(void)
          LCDMessage(LINE1_START_ADDR+au8LedAddr[aeUserList[u8Index].eLed],"0");
        }
      }
-     u8Index=0; 
    }
    
- 
+   
+#endif 
    
     
 
