@@ -200,15 +200,22 @@ static void UserApp1SM_Idle(void)
    static u8 au8LedAddr[]={0,2,4,6,8,10,12,14};
    static u8 u8CharNum;
    static u8 u8Index=0;
-   static u8 u8Option=0;
-   
-  if(G_au8DebugScanfBuffer[0]=='2')
+   static u8 u8Option1=0;
+   static bool bCheckCommandString(u8*pu8CommandToCheck);
+   static u8 *pu8CommandToCheck;
+   static u8 au8ValidLed[]={'W','P','B','C','G','Y','O','R'}; 
+   static u8 u8Order;
+   static u8 *pu8Parser;
+   static u32 u32Count;
+   static u32 u32Count1;
+  
+   if(G_au8DebugScanfBuffer[0]=='2')
 	{
 		DebugPrintf("\n\rRun Demolist\n\r");
-		u8Option=1;
+		u8Option1=1;
 	}
 
-   if(u8Option==1)
+   if(u8Option1==1)
    {
     if(WasButtonPressed(BUTTON0))
    {
@@ -255,14 +262,43 @@ static void UserApp1SM_Idle(void)
    u8Counter[3]=0x30+u32Time%10; 
    u8Counter[4]=0;
    
-   if(u32Time%1000 == 0)    //Display once every 100ms.
+   if(u32Time%100 == 0)    //Display once every 100ms.
 	{
         LCDMessage(LINE2_START_ADDR,u8Counter);
 	}
-
-
-   if(u8CharNum==1){
-   for(u8 j=0;j<16;j++)  //The LEDS are in prople order.
+   
+   for(u8Order=0;u8Order<sizeof(au8ValidLed);u8Order++)
+   {
+	 if(*pu8Parser==au8ValidLed[u8Order])
+     pu8Parser++;
+   }
+   
+   if(*pu8Parser=='-')
+   {
+	 pu8Parser++;
+	 if(*pu8Parser>='0'&&*pu8Parser<='9')
+	 {
+	   u32Count=atoi(pu8Parser);
+	    pu8Parser++;
+	   if(*pu8Parser=='-')
+	   {
+		 pu8Parser++;
+		 if(*pu8Parser>='0'&&*pu8Parser<='9')
+		 {
+		   u32Count1=atoi(pu8Parser);
+		   pu8Parser++;
+		   if(*pu8Parser==0x0D)
+		   {
+			 u8Option1=2;
+		   }
+		 }
+	   }
+	 }
+   }
+ 
+  if( u8CharNum==1)
+   {
+        for(u8 j=0;j<16;j++)  //The LEDS are in prople order.
     {
         if(u32Time==aeDemoList[j].u32Time)
         {
@@ -285,8 +321,11 @@ static void UserApp1SM_Idle(void)
    }
 
  #if 1  
-   for(u8 u8Index=0;u8Index<16;u8Index++) {
-   if((u32Time==aeUserList[u8Index].u32Time)&&(u8CharNum==2))
+   if( u8CharNum==2)
+   {
+    for(u8 u8Index=0;u8Index<16;u8Index++) 
+    {
+     if((u32Time==aeUserList[u8Index].u32Time)&&(u8CharNum==2))
      {
        LedPWM(aeUserList[u8Index].eLed,aeUserList[u8Index].eCurrentRate);
        
@@ -301,7 +340,7 @@ static void UserApp1SM_Idle(void)
        }
      }
    }
-   
+   }
    
 #endif 
    

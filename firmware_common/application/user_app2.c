@@ -123,70 +123,7 @@ State Machine Function Definitions
 /* Wait for ??? */
 static void UserApp2SM_Idle(void)
 {
-   static u8 u8RateType=0;
-   static u16 u16BlinkCount=0;
-   
-   if(WasButtonPressed(BUTTON0))
-   {
-    ButtonAcknowledge(BUTTON0);
-    u8RateType++;
-    u16BlinkCount=0;
-   }
-   
-   if(WasButtonPressed(BUTTON1))
-   {
-     ButtonAcknowledge(BUTTON1);
-     u8RateType--;
-     u16BlinkCount=0;
-   }
-   
-   switch(u8RateType)
-   {
-   case 1:
-     u16BlinkCount++;
-     if(u16BlinkCount==1000)
-     {
-       u16BlinkCount=0;
-       LedToggle(YELLOW);
-      }
-     break;
-   case 2:
-     u16BlinkCount++;
-     if(u16BlinkCount==500)
-     {
-       u16BlinkCount=0;
-       LedToggle(YELLOW);
-     }
-     break;
-   case 3:
-     u16BlinkCount++;
-     if(u16BlinkCount==250)
-     {
-       u16BlinkCount=0;
-       LedToggle(YELLOW);
-     }
-     break;
-   case 4:
-     u16BlinkCount++;
-     if(u16BlinkCount==125)
-     {
-       u16BlinkCount=0;
-       LedToggle(YELLOW);
-     }
-     break;
-   case 5:
-     u16BlinkCount++;
-     if(u16BlinkCount==63)
-     {
-       u16BlinkCount=0;
-       LedToggle(YELLOW);
-     }
-     break;
-   default:
-     break;
-     }
-   
-   
+  
   
 } /* end UserApp2SM_Idle() */
      
