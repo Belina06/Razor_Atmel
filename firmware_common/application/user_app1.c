@@ -140,9 +140,7 @@ State Machine Function Definitions
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
 {
-  static u8 au8Message1[]={"STATE 1"};
-  static u8 au8Message2[]={"STATE 2"};
-  static u16 u16Counter=0;
+  static u16 u16Counter=0;  //u16Counter is a time counter for BUZZER1.
   static u8 au8data[4];
   static u8 au8input[2];
   static u8 u8incount;
@@ -150,58 +148,62 @@ static void UserApp1SM_Idle(void)
   static bool b1state=FALSE;
   static bool b2state=FALSE;
   static bool bBstate=FALSE;
-  //DebugScanf(u8* au8Buffer_)
   u16Counter++;
   u8incount=DebugScanf(au8input);
   
-  if(u8incount>0){
+  if(u8incount>0)
+  {
      au8data[u8datacount]=au8input[0];
      
-     if(au8input[0]=='\r'){
+     if(au8input[0]=='\r')
+     {
        
-       if(au8data[0]=='2'){
-           
-             b2state=TRUE;
+       if(au8data[0]=='2')
+       {
+           b2state=TRUE;
+          }
+       
+       if(au8data[0]=='1')
+       {
+            b1state=TRUE;
           
        }
-       if(au8data[0]=='1'){
-           
-             b1state=TRUE;
-          
-       }
+       
        u8datacount=0;
-     }else{
-       
-        u8datacount++;
+     }
+     
+     else
+     {
+       u8datacount++;
      }
   }
+  
   if(WasButtonPressed(BUTTON1))
   {
       ButtonAcknowledge(BUTTON1);
       b1state=TRUE;
   } 
-  if( b1state==TRUE){
-    
-     bBstate=FALSE;
-     PWMAudioOff(BUZZER1);
+  
+  if( b1state==TRUE)
+  {
+    bBstate=FALSE;
+    PWMAudioOff(BUZZER1);
     b1state=FALSE;
     LedOn(WHITE);
     LedOn(PURPLE);
     LedOn(BLUE);
     LedOn(CYAN);
+    LedOff(GREEN);
+    LedOff(YELLOW);
+    LedOff(ORANGE);
+    LedOff(RED);
     LedOn(LCD_RED);
     LedOn(LCD_BLUE);
     LedOff(LCD_GREEN);
     
-    
-   
     LCDCommand(LCD_CLEAR_CMD);
-    LCDMessage(LINE1_START_ADDR, au8Message1);
-   
-   
+    LCDMessage(LINE1_START_ADDR, "STATE 1");
     PWMAudioOff(BUZZER1);
-    
-    
     DebugLineFeed();
 
     DebugPrintf("ENTERING STATE 2");
@@ -216,35 +218,41 @@ static void UserApp1SM_Idle(void)
      b2state=TRUE;
   }
 
-  if( b2state==TRUE){  
+  if( b2state==TRUE)
+  {  
        b2state=FALSE;
        bBstate=TRUE;
-      u16Counter=0;
-      PWMAudioOn(BUZZER1);
-      LedBlink(GREEN,LED_1HZ);
-      LedBlink(RED,LED_8HZ);
-      LedBlink(YELLOW,LED_2HZ);
-      LedBlink(ORANGE,LED_4HZ);
-      LedOn(LCD_RED);
-      LedOff(LCD_BLUE);
-      LedPWM(LCD_GREEN, LED_PWM_20);
-      DebugLineFeed();
-      DebugPrintf("ENTERING STATE 1");
-     DebugLineFeed();
-     LCDCommand(LCD_CLEAR_CMD);
-     LCDMessage(LINE1_START_ADDR, "STATE 2");
-
-   
-  }
-  if(bBstate==TRUE){
+       u16Counter=0;
+       PWMAudioOn(BUZZER1);
+       LedBlink(GREEN,LED_1HZ);
+       LedBlink(RED,LED_8HZ);
+       LedBlink(YELLOW,LED_2HZ);
+       LedBlink(ORANGE,LED_4HZ);
+       LedOff(WHITE);
+       LedOff(PURPLE);
+       LedOff(BLUE);
+       LedOff(CYAN);
+       LedOn(LCD_RED);
+       LedOff(LCD_BLUE);
+       LedPWM(LCD_GREEN, LED_PWM_20);
+       DebugLineFeed();
+       DebugPrintf("ENTERING STATE 1");
+       DebugLineFeed();
+       LCDCommand(LCD_CLEAR_CMD);
+       LCDMessage(LINE1_START_ADDR, "STATE 2");
+}
+  
+  if(bBstate==TRUE)
+  {
       if(u16Counter==100)
     { 
       PWMAudioOff(BUZZER1);
     }
-    if(u16Counter>=1000){
-      
-    PWMAudioOn(BUZZER1);
-    u16Counter=0;
+    
+      if(u16Counter>=1000)
+    {
+      PWMAudioOn(BUZZER1);
+      u16Counter=0;
   }
  }
 
