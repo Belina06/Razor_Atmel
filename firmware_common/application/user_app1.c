@@ -43,7 +43,7 @@ All Global variable names shall start with "G_UserApp1"
 /* New variables */
 volatile u32 G_u32UserApp1Flags;                       /* Global state flags */
 
-
+static u8 UserApp_au8UserInputBuffer[U16_USER_INPUT_BUFFER_SIZE];
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Existing variables (defined in other files -- should all contain the "extern" keyword) */
 extern volatile u32 G_u32SystemFlags;                  /* From main.c */
@@ -51,6 +51,9 @@ extern volatile u32 G_u32ApplicationFlags;             /* From main.c */
 
 extern volatile u32 G_u32SystemTime1ms;                /* From board-specific source file */
 extern volatile u32 G_u32SystemTime1s;                 /* From board-specific source file */
+
+extern u8 G_au8DebugScanfBuffer[DEBUG_SCANF_BUFFER_SIZE]; /*From debug.c */
+extern u8 G_u8DebugScanfCharCount;                        /*From debug.c */
 
 
 /***********************************************************************************************************************
@@ -139,109 +142,77 @@ State Machine Function Definitions
 /*-------------------------------------------------------------------------------------------------------------------*/
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
-{
+{  
   static u16 u16Counter=0;  //u16Counter is a time counter for BUZZER1.
-  static u8 au8data[4];
-  static u8 au8input[2];
-  static u8 u8incount;
-  static u8 u8datacount=0;
-  static bool b1state=FALSE;
-  static bool b2state=FALSE;
-  static bool bBstate=FALSE;
+  static u8 au8State[]={'0','0'};
+  static bool b1state=FALSE;  // b1state means STATE 1.
+  static bool b2state=FALSE;  //b2state means STATE 2.
+  static bool bBstate=FALSE;  //bBstate is a state where  time counter can count.
+  
   u16Counter++;
-  u8incount=DebugScanf(au8input);
-  
-  if(u8incount>0)
-  {
-     au8data[u8datacount]=au8input[0];
+  DebugScanf(au8State);
      
-     if(au8input[0]=='\r')
-     {
-       
-       if(au8data[0]=='2')
-       {
-           b2state=TRUE;
-          }
-       
-       if(au8data[0]=='1')
-       {
-            b1state=TRUE;
-          
-       }
-       
-       u8datacount=0;
-     }
-     
-     else
-     {
-       u8datacount++;
-     }
-  }
-  
-  if(WasButtonPressed(BUTTON1))
+  /*This is State 1.*/
+  if(WasButtonPressed(BUTTON1)||(au8State[0]=='1'))
   {
       ButtonAcknowledge(BUTTON1);
       b1state=TRUE;
+      b2state=FALSE;
+      au8State[0]=0;
+      bBstate=FALSE;
+      PWMAudioOff(BUZZER1);
+      LedOn(WHITE);
+      LedOn(PURPLE);
+      LedOn(BLUE);
+      LedOn(CYAN);
+      LedOff(GREEN);
+      LedOff(YELLOW);
+      LedOff(ORANGE);
+      LedOff(RED);
+      LedOn(LCD_RED);
+      LedOn(LCD_BLUE);
+      LedOff(LCD_GREEN);
+    
+      LCDCommand(LCD_CLEAR_CMD);
+      LCDMessage(LINE1_START_ADDR, "STATE 1");
+      PWMAudioOff(BUZZER1);
+      DebugLineFeed();
+
+      DebugPrintf("ENTERING STATE 1");
+      DebugLineFeed();
+      b1state=FALSE;
   } 
   
-  if( b1state==TRUE)
+  /*This is state 2.*/
+  if(WasButtonPressed(BUTTON2)||(au8State[0]=='2'))
   {
-    bBstate=FALSE;
-    PWMAudioOff(BUZZER1);
-    b1state=FALSE;
-    LedOn(WHITE);
-    LedOn(PURPLE);
-    LedOn(BLUE);
-    LedOn(CYAN);
-    LedOff(GREEN);
-    LedOff(YELLOW);
-    LedOff(ORANGE);
-    LedOff(RED);
-    LedOn(LCD_RED);
-    LedOn(LCD_BLUE);
-    LedOff(LCD_GREEN);
-    
-    LCDCommand(LCD_CLEAR_CMD);
-    LCDMessage(LINE1_START_ADDR, "STATE 1");
-    PWMAudioOff(BUZZER1);
-    DebugLineFeed();
-
-    DebugPrintf("ENTERING STATE 2");
-    DebugLineFeed();
-    }
-    
-  
-  
-  if(WasButtonPressed(BUTTON2))
-  {
-    ButtonAcknowledge(BUTTON2);
+     ButtonAcknowledge(BUTTON2);
      b2state=TRUE;
+     b1state=FALSE;
+     au8State[0]=0;
+     bBstate=TRUE;
+     u16Counter=0;
+     PWMAudioOn(BUZZER1);
+     LedBlink(GREEN,LED_1HZ);
+     LedBlink(RED,LED_8HZ);
+     LedBlink(YELLOW,LED_2HZ);
+     LedBlink(ORANGE,LED_4HZ);
+     LedOff(WHITE);
+     LedOff(PURPLE);
+     LedOff(BLUE);
+     LedOff(CYAN);
+     LedOn(LCD_RED);
+     LedOff(LCD_BLUE);
+     LedPWM(LCD_GREEN, LED_PWM_20);
+     DebugLineFeed();
+     DebugPrintf("ENTERING STATE 2");
+     DebugLineFeed();
+     LCDCommand(LCD_CLEAR_CMD);
+     LCDMessage(LINE1_START_ADDR, "STATE 2");
+     b2state=FALSE;
   }
-
-  if( b2state==TRUE)
-  {  
-       b2state=FALSE;
-       bBstate=TRUE;
-       u16Counter=0;
-       PWMAudioOn(BUZZER1);
-       LedBlink(GREEN,LED_1HZ);
-       LedBlink(RED,LED_8HZ);
-       LedBlink(YELLOW,LED_2HZ);
-       LedBlink(ORANGE,LED_4HZ);
-       LedOff(WHITE);
-       LedOff(PURPLE);
-       LedOff(BLUE);
-       LedOff(CYAN);
-       LedOn(LCD_RED);
-       LedOff(LCD_BLUE);
-       LedPWM(LCD_GREEN, LED_PWM_20);
-       DebugLineFeed();
-       DebugPrintf("ENTERING STATE 1");
-       DebugLineFeed();
-       LCDCommand(LCD_CLEAR_CMD);
-       LCDMessage(LINE1_START_ADDR, "STATE 2");
-}
   
+  /*This is the time when BUZZER1i is on or off.*/
   if(bBstate==TRUE)
   {
       if(u16Counter==100)
@@ -255,6 +226,7 @@ static void UserApp1SM_Idle(void)
       u16Counter=0;
   }
  }
+
 
 } /* end UserApp1SM_Idle() */
     
