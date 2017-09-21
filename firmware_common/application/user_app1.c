@@ -64,6 +64,11 @@ static fnCode_type UserApp1_StateMachine;            /* The state machine functi
 //static u32 UserApp1_u32Timeout;                      /* Timeout counter used across states */
 
 
+
+
+
+
+
 /**********************************************************************************************************************
 Function Definitions
 **********************************************************************************************************************/
@@ -133,6 +138,102 @@ void UserApp1RunActiveState(void)
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Private functions                                                                                                  */
 /*--------------------------------------------------------------------------------------------------------------------*/
+static void UserApp1_State1(void)
+{
+    //This is where the State 1 is.
+    static u16 u16Counter=0;  //This is a time counter.
+
+    u16Counter++;
+
+    //Turn on the lights we need and turn off the lights that we don't need.
+    LedOn(WHITE);
+    LedOn(PURPLE);
+    LedOn(BLUE);
+    LedOn(CYAN);
+    LedOff(GREEN);
+    LedOff(YELLOW);
+    LedOff(ORANGE);
+    LedOff(RED);
+
+    //Setting up the backlight.
+    LedOn(LCD_RED);
+    LedOn(LCD_BLUE);
+    LedOff(LCD_GREEN);
+
+    if(u16Counter==100)
+    {
+        //Display screen .
+        LCDCommand(LCD_CLEAR_CMD);
+        LCDMessage(LINE1_START_ADDR, "STATE 1");
+        PWMAudioOff(BUZZER1);
+
+        //Tera Term.
+        DebugLineFeed();
+        DebugPrintf("ENTERING STATE 1");
+        DebugLineFeed();
+        u16Counter=0;
+    }
+
+    UserApp1_StateMachine=UserApp1SM_Idle;
+      
+    
+ }
+
+static void UserApp1_State2(void)
+{
+    //This is where the State 2 is.
+    static u16 u16Counter=0;
+
+    u16Counter++;
+
+    if(u16Counter==100)
+    {   
+        //Blinking the lights we need.
+        LedBlink(GREEN,LED_1HZ);
+        LedBlink(RED,LED_8HZ);
+        LedBlink(YELLOW,LED_2HZ);
+        LedBlink(ORANGE,LED_4HZ);
+        
+        //Tera Term.
+        DebugLineFeed();
+        DebugPrintf("ENTERING STATE 2");
+        DebugLineFeed();
+        
+        //Display screen.
+        LCDCommand(LCD_CLEAR_CMD);
+        LCDMessage(LINE1_START_ADDR, "STATE 2");
+
+    }
+    
+    //Turn off the lights we don't need.
+    LedOff(WHITE);
+    LedOff(PURPLE);
+    LedOff(BLUE);
+    LedOff(CYAN);
+
+    //Setting up the backlight.
+    LedOn(LCD_RED);
+    LedOff(LCD_BLUE);
+    LedPWM(LCD_GREEN, LED_PWM_20);
+
+    //This is the time when BUZZER 1 is on or off.
+    if(u16Counter==100)
+    { 
+        PWMAudioOff(BUZZER1);
+    }
+
+    if(u16Counter>=1000)
+    {
+        PWMAudioOn(BUZZER1);
+        u16Counter=0;
+    }
+
+
+    UserApp1_StateMachine=UserApp1SM_Idle;
+}
+
+
+
 
 
 /**********************************************************************************************************************
@@ -143,91 +244,38 @@ State Machine Function Definitions
 /* Wait for ??? */
 static void UserApp1SM_Idle(void)
 {  
-  static u16 u16Counter=0;  //u16Counter is a time counter for BUZZER1.
+  //These are all for changing the states.
   static u8 au8State[]={'0','0'};
-  static bool b1state=FALSE;  // b1state means STATE 1.
-  static bool b2state=FALSE;  //b2state means STATE 2.
-  static bool bBstate=FALSE;  //bBstate is a state where  time counter can count.
+  static bool bFlagState=FALSE;    
+  static bool bFlagState1=FALSE;   
   
-  u16Counter++;
   DebugScanf(au8State);
-     
-  /*This is State 1.*/
+  
+  //This is Button 1 or inputing 1 from the keyboard.
   if(WasButtonPressed(BUTTON1)||(au8State[0]=='1'))
-  {
-      ButtonAcknowledge(BUTTON1);
-      b1state=TRUE;
-      b2state=FALSE;
-      au8State[0]=0;
-      bBstate=FALSE;
-      PWMAudioOff(BUZZER1);
-      LedOn(WHITE);
-      LedOn(PURPLE);
-      LedOn(BLUE);
-      LedOn(CYAN);
-      LedOff(GREEN);
-      LedOff(YELLOW);
-      LedOff(ORANGE);
-      LedOff(RED);
-      LedOn(LCD_RED);
-      LedOn(LCD_BLUE);
-      LedOff(LCD_GREEN);
-    
-      LCDCommand(LCD_CLEAR_CMD);
-      LCDMessage(LINE1_START_ADDR, "STATE 1");
-      PWMAudioOff(BUZZER1);
-      DebugLineFeed();
-
-      DebugPrintf("ENTERING STATE 1");
-      DebugLineFeed();
-      b1state=FALSE;
-  } 
-  
-  /*This is state 2.*/
-  if(WasButtonPressed(BUTTON2)||(au8State[0]=='2'))
-  {
-     ButtonAcknowledge(BUTTON2);
-     b2state=TRUE;
-     b1state=FALSE;
+   {
+     ButtonAcknowledge(BUTTON1);
+     bFlagState=TRUE;
+     bFlagState1=FALSE;
      au8State[0]=0;
-     bBstate=TRUE;
-     u16Counter=0;
-     PWMAudioOn(BUZZER1);
-     LedBlink(GREEN,LED_1HZ);
-     LedBlink(RED,LED_8HZ);
-     LedBlink(YELLOW,LED_2HZ);
-     LedBlink(ORANGE,LED_4HZ);
-     LedOff(WHITE);
-     LedOff(PURPLE);
-     LedOff(BLUE);
-     LedOff(CYAN);
-     LedOn(LCD_RED);
-     LedOff(LCD_BLUE);
-     LedPWM(LCD_GREEN, LED_PWM_20);
-     DebugLineFeed();
-     DebugPrintf("ENTERING STATE 2");
-     DebugLineFeed();
-     LCDCommand(LCD_CLEAR_CMD);
-     LCDMessage(LINE1_START_ADDR, "STATE 2");
-     b2state=FALSE;
-  }
-  
-  /*This is the time when BUZZER1i is on or off.*/
-  if(bBstate==TRUE)
-  {
-      if(u16Counter==100)
-    { 
-      PWMAudioOff(BUZZER1);
-    }
-    
-      if(u16Counter>=1000)
-    {
-      PWMAudioOn(BUZZER1);
-      u16Counter=0;
-  }
- }
-
-
+   }
+   
+  //This is Button 2 or inputing 2 from the keyboard.
+   if(WasButtonPressed(BUTTON2)||(au8State[0]=='2'))
+   {
+     ButtonAcknowledge(BUTTON2);
+     bFlagState=FALSE;
+     bFlagState1=TRUE;
+     au8State[0]=0;
+   }
+   if(bFlagState)
+   {
+      UserApp1_StateMachine=UserApp1_State1;
+   }
+   if(bFlagState1)
+   {
+      UserApp1_StateMachine=UserApp1_State2;
+   }
 } /* end UserApp1SM_Idle() */
     
 
@@ -237,6 +285,10 @@ static void UserApp1SM_Error(void)
 {
   
 } /* end UserApp1SM_Error() */
+
+
+  
+
 
 
 
