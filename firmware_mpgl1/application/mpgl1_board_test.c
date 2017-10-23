@@ -44,7 +44,7 @@ static u32 BoardTest_u32Timeout;                         /* Timeout counter used
 
 static  AntAssignChannelInfoType BoardTest_sChannelInfo; /* ANT channel configuration */
 
-
+static u8 u8LastData = 0xFF;
 /***********************************************************************************************************************
 Function Definitions
 ***********************************************************************************************************************/
@@ -171,31 +171,37 @@ void BoardTestSM_SetupAnt(void)
 /*--------------------------------------------------------------------------------------------------------------------*/
 void BoardTestSM_Idle(void)
 {
-  static bool bButton0Test = FALSE;
+  /*static bool bButton0Test = FALSE;
   static u8 u8Button2Test = 0;
-  static u8 u8Button3Test = 0;
-  static u8 au8TestMessage[] = {0, 0, 0, 0, 0, 0, 0, 0};
+  static u8 u8Button3Test = 0;*/
+  static u8 au8TestMessage[] = {0x5B, 0, 0, 0, 0xFF, 0, 0, 0};
+  static u8 au8TestDisplay[8]={0,0,0,0,0,0,0,0};
+
+  u8 au8DataContent[] = "xxxxxxxxxxxxxxxx";
+
+  u8LastData = 0xFF;
+
   static u8 au8DataMessage[] = "ANT data: ";
-  u8 au8DataContent[26];
+  // u8 au8DataContent[26];
   AntChannelStatusType eAntCurrentState;
 
-                          /* "01234567890123456789" */
-  static const u8 au8Eng[] = "ENGENUICS RAZOR     ";
+  /* "01234567890123456789" */
+  /*static const u8 au8Eng[] = "ENGENUICS RAZOR     ";
   static const u8 au8MPG[] = "ASCII DEV BOARD     ";
   u8 au8Temp1[21];
   u8 au8Temp2[21];
   
   static u8 u8ResetIndex = 0;
   static u8 u8Index = 0;
-  static u32 u32LcdTimer;
+  static u32 u32LcdTimer;*/
 
   /* BUTTON0 toggles LEDs */
-  if( WasButtonPressed(BUTTON0) )
+  /*if( WasButtonPressed(BUTTON0) )
   {
-    ButtonAcknowledge(BUTTON0);
+    ButtonAcknowledge(BUTTON0);*/
     
     /* If test is active, deactivate it, put all LEDs back on */
-    if(bButton0Test)
+    /*if(bButton0Test)
     {
       bButton0Test = FALSE;
 
@@ -209,7 +215,7 @@ void BoardTestSM_Idle(void)
       LedOn(RED);
     }
     /* Else activate it: turn all LEDs off */
-    else
+   /* else
     {
       bButton0Test = TRUE;
 
@@ -222,14 +228,14 @@ void BoardTestSM_Idle(void)
       LedOff(ORANGE);
       LedOff(RED);
     }
-  } /* End of BUTTON 0 test */
+  }  End of BUTTON 0 test */
 
 /* BUTTON1 toggles the radio and buzzer test.  When the button is pressed,
   an open channel request is made.  The system monitors _ANT_FLAGS_CHANNEL_OPEN
   to control wether or not the buzzer is on. */
   
   /* Toggle the beeper and ANT radio on BUTTON1 */
-  if( WasButtonPressed(BUTTON1) )
+  /*if( WasButtonPressed(BUTTON1) )
   {
     ButtonAcknowledge(BUTTON1);
     eAntCurrentState = AntRadioStatusChannel(ANT_CHANNEL_BOARDTEST);
@@ -244,11 +250,11 @@ void BoardTestSM_Idle(void)
        AntCloseChannelNumber(ANT_CHANNEL_BOARDTEST);
     }
   }
- 
+ */
  
 #if 0
   /* Monitor the CHANNEL_OPEN flag to decide whether or not audio should be on */
-  if( (AntRadioStatusChannel(ANT_CHANNEL_BOARDTEST) == ANT_OPEN ) && 
+  /*if( (AntRadioStatusChannel(ANT_CHANNEL_BOARDTEST) == ANT_OPEN ) && 
      !(BoardTest_u32Flags & _AUDIO_ANT_ON) )
   {
     PWMAudioOn(BUZZER1);
@@ -259,7 +265,7 @@ void BoardTestSM_Idle(void)
   {
     PWMAudioOff(BUZZER1);
     BoardTest_u32Flags &= ~_AUDIO_ANT_ON;
-  }
+  }*/
 #endif
   
   /* Process ANT Application messages */  
@@ -285,28 +291,67 @@ void BoardTestSM_Idle(void)
     }
     else if(G_eAntApiCurrentMessageClass == ANT_TICK)
     {
+        u8LastData = G_au8AntApiCurrentMessageBytes[ANT_TICK_MSG_EVENT_CODE_INDEX];
 
      /* Update and queue the new message data */
-      au8TestMessage[7]++;
-      if(au8TestMessage[7] == 0)
-      {
-        au8TestMessage[6]++;
-        if(au8TestMessage[6] == 0)
+
+        au8TestMessage[7]++;
+        if(au8TestMessage[7] == 0)
+       {
+         au8TestMessage[6]++;
+            
+            if(au8TestMessage[6] == 0)
+            {
+                au8TestMessage[5]++;
+                }
+       }
+
+        if(u8LastData == EVENT_TRANSFER_TX_FAILED)
         {
-          au8TestMessage[5]++;
+            au8TestMessage[3]++;        
+            
+            if(au8TestMessage[3] == 0)
+            {
+                au8TestMessage[2]++;           
+
+              if(au8TestMessage[2] == 0)
+              {
+                au8TestMessage[1]++;
+                }
+                    }
         }
-      }
-      AntQueueBroadcastMessage(ANT_CHANNEL_BOARDTEST, au8TestMessage);
+
+      AntQueueAcknowledgedMessage(ANT_CHANNEL_BOARDTEST, au8TestMessage);
+
+        for(u8 i = 0; i <3; i++)
+        {
+            au8TestDisplay[2 * i]     = HexToASCIICharUpper(au8TestMessage[i+1] / 16);
+            au8TestDisplay[2 * i + 1] = HexToASCIICharUpper(au8TestMessage[i+1] % 16);
+        }
+
+            LCDMessage(LINE1_START_ADDR, au8TestDisplay);
+
+         /* get au8TestDisplay and display it on lcd  */
+
+      for(u8 i = 0; i <3; i++)
+      {
+        au8TestDisplay[2 * i]     = HexToASCIICharUpper(au8TestMessage[i+5] / 16);
+        au8TestDisplay[2 * i + 1] = HexToASCIICharUpper(au8TestMessage[i+5] % 16);
+    }
+
+      LCDMessage(LINE2_START_ADDR, au8TestDisplay);
+
     }
   }
+}
 
   /* BUTTON2 toggles LCD backlights */
-  if( WasButtonPressed(BUTTON2) )
+  /*if( WasButtonPressed(BUTTON2) )
   {
     ButtonAcknowledge(BUTTON2);
     
-    /* If test is active, deactivate it, put all LEDs back on */
-    switch(u8Button2Test)
+    If test is active, deactivate it, put all LEDs back on */
+   /* switch(u8Button2Test)
     {
       case 0:
         u8Button2Test = 1;
@@ -354,12 +399,12 @@ void BoardTestSM_Idle(void)
   } /* End of BUTTON 2 test */
 
   /* BUTTON3 toggles buzzer test */
-  if( WasButtonPressed(BUTTON3) )
+  /*if( WasButtonPressed(BUTTON3) )
   {
     ButtonAcknowledge(BUTTON3);
     
     /* If test is active, deactivate it, put all LEDs back on */
-    switch(u8Button3Test)
+    /*switch(u8Button3Test)
     {
       case 0:
         u8Button3Test = 1;
@@ -391,7 +436,7 @@ void BoardTestSM_Idle(void)
 
   
   /* LCD scrolling message */
-  if(IsTimeUp(&u32LcdTimer, 200))
+  /*if(IsTimeUp(&u32LcdTimer, 200))
   {
     u32LcdTimer = G_u32SystemTime1ms;
     au8Temp1[20] = NULL;
@@ -420,7 +465,10 @@ void BoardTestSM_Idle(void)
 
   }
   
-} /* end BoardTestSM_Idle() */
+}
+}
+}*/
+/* end BoardTestSM_Idle() */
 
 
 /*--------------------------------------------------------------------------------------------------------------------*/
